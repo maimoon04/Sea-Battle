@@ -13,6 +13,9 @@ public class GridController : MonoBehaviour
 	public RectTransform gridArea;
 	public bool isOpponentGrid = false;
 
+	[Header("Placement")]
+	public bool allowPlacement = false; // toggled by TurnManager during setup
+
 	public UnityEvent<Vector2Int> OnCellClicked; // callback for clicks
 
 	private Cell[,] cells;
@@ -115,6 +118,7 @@ public class GridController : MonoBehaviour
 	/// </summary>
 	public void PreviewPlacement(Ship ship, Vector2Int start, bool isVertical)
 	{
+		if (!allowPlacement) return;
 		ClearPreview();
 		if (ship == null || ship.shipData == null) return;
 
@@ -170,6 +174,7 @@ public class GridController : MonoBehaviour
 	/// </summary>
 	public bool TryPlaceShip(Ship ship, Vector2Int start, bool isVertical)
 	{
+		if (!allowPlacement) return false;
 		if (ship == null || ship.shipData == null) return false;
 		int len = ship.shipData.length;
 		List<Cell> toPlace = new List<Cell>();

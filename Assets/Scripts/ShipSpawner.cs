@@ -8,6 +8,8 @@ public class ShipSpawner : MonoBehaviour
     public GameObject shipPrefab; // prefab containing Ship component
     public RectTransform container; // UI container to parent spawned ships
     public List<ShipData> shipsToSpawn = new List<ShipData>();
+    [HideInInspector]
+    public List<Ship> spawnedShips = new List<Ship>();
 
     [Header("Layout")]
     public float cellSize = 10f;
@@ -21,6 +23,7 @@ public class ShipSpawner : MonoBehaviour
         {
             DestroyImmediate(container.GetChild(i).gameObject);
         }
+        spawnedShips.Clear();
     }
 
     // Spawn all ships from the configured ShipData list
@@ -49,11 +52,23 @@ public class ShipSpawner : MonoBehaviour
             if (ship != null)
             {
                 ship.Initialize(sd, cellSize, spacing);
+                spawnedShips.Add(ship);
             }
 
             // Advance x by ship width + spacing
             float width = (sd != null) ? (sd.length * cellSize + (sd.length - 1) * spacing) : cellSize;
             x += width + spacing;
         }
+    }
+
+    // Returns true when all spawned ships have been placed on the grid
+    public bool AllShipsPlaced()
+    {
+        if (spawnedShips == null || spawnedShips.Count == 0) return false;
+        foreach (var s in spawnedShips)
+        {
+            if (s == null || !s.isPlaced) return false;
+        }
+        return true;
     }
 }
