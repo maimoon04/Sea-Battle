@@ -1623,6 +1623,7 @@ MonoBehaviour:
   player2Grid: {fileID: 804422654}
   player2ReadyButton: {fileID: 1440508091}
   player2Cannon: {fileID: 1689109028}
+  gameMode: 1
   currentBattlePlayer: 1
   player1Score: 0
   player2Score: 0

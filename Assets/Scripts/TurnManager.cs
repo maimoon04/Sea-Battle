@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public enum TurnState { Player1Placement, Player2Placement, Battle }
+public enum GameMode { PvP, PvAI }
 
 public class TurnManager : MonoBehaviour
 {
@@ -21,6 +23,7 @@ public class TurnManager : MonoBehaviour
     public CannonController player2Cannon;
 
     public TurnState State { get; private set; } = TurnState.Player1Placement;
+    public GameMode gameMode = GameMode.PvP;
 
     // 1 = player1's turn, 2 = player2's turn
     public int currentBattlePlayer = 1;
@@ -32,11 +35,19 @@ public class TurnManager : MonoBehaviour
 
     void Start()
     {
+        SetGameMode(gameMode);
         // Hook up ready buttons
         if (player1ReadyButton != null) player1ReadyButton.onClick.AddListener(() => OnPlayerReady(1));
         if (player2ReadyButton != null) player2ReadyButton.onClick.AddListener(() => OnPlayerReady(2));
 
+        // You can set gameMode from UI before this
         EnterPlayer1Placement();
+    }
+
+    // Call this from UI to set game mode before game starts
+    public void SetGameMode(GameMode mode)
+    {
+        gameMode = mode;
     }
 
     void EnterPlayer1Placement()
@@ -55,13 +66,48 @@ public class TurnManager : MonoBehaviour
     void EnterPlayer2Placement()
     {
         State = TurnState.Player2Placement;
-        // spawn for player 2
-        if (player2Spawner != null) player2Spawner.SpawnAll();
-
-        SetPlacementEnabled(player1Grid, player1Spawner, false);
+         if (player2Spawner != null) player2Spawner.SpawnAll();
+            SetPlacementEnabled(player1Grid, player1Spawner, false);
         SetPlacementEnabled(player2Grid, player2Spawner, true);
-
-        UpdateReadyButtons();
+            
+        if (gameMode == GameMode.PvAI)
+        {
+            // AI: place ships randomly
+            if (player2Spawner != null && player2Grid != null)
+            {
+                PlaceShipsRandomly(player2Spawner, player2Grid);
+            }
+            // Skip ready button, go straight to battle
+            EnterBattle();
+        }
+        else
+        {
+            // PvP: normal placement
+            UpdateReadyButtons();
+        }
+    }
+    // Randomly place all ships for the AI
+    void PlaceShipsRandomly(ShipSpawner spawner, GridController grid)
+    {
+        System.Random rand = new System.Random();
+        foreach (var ship in spawner.spawnedShips)
+        {
+            bool placed = false;
+            int attempts = 0;
+            while (!placed && attempts < 50)
+            {
+                Debug.Log($"Placing ship {ship.shipData.shipName}, attempt {attempts + 1}");
+                bool vertical = rand.Next(0, 2) == 0;
+                int maxX = vertical ? grid.columns - ship.shipData.length : grid.columns - 1;
+                int maxY = vertical ? grid.rows - 1 : grid.rows - ship.shipData.length;
+                int x = rand.Next(0, maxX + 1);
+                int y = rand.Next(0, maxY + 1);
+                Vector2Int start = new Vector2Int(x, y);
+                ship.isVertical = vertical;
+                placed = grid.TryPlaceShip(ship, start, vertical);
+                attempts++;
+            }
+        }
     }
 
     void EnterBattle()
@@ -102,12 +148,18 @@ public class TurnManager : MonoBehaviour
             player1Cannon.shipSpawner = player2Spawner;
             player1Cannon.FireAtCell(coord);
             NextBattleTurn();
+            // If AI mode, let AI fire after player 1
+            if (gameMode == GameMode.PvAI && !gameOver)
+            {
+                StartCoroutine(AIFireCoroutine());
+            }
         }
     }
 
     // Called when a cell is clicked on player 1's grid (player 2 fires)
     void OnPlayer1GridCellClicked(Vector2Int coord)
     {
+        if (gameMode == GameMode.PvAI) return; // AI never clicks
         if (State == TurnState.Battle && currentBattlePlayer == 1) return;
         if (gameOver) return;
         if (player2Cannon != null && player1Grid != null)
@@ -115,6 +167,32 @@ public class TurnManager : MonoBehaviour
             player2Cannon.targetGrid = player1Grid;
             player2Cannon.shipSpawner = player1Spawner;
             player2Cannon.FireAtCell(coord);
+            NextBattleTurn();
+        }
+    }
+    // AI fires at a random valid cell on player 1's grid
+    IEnumerator AIFireCoroutine()
+    {
+        yield return new WaitForSeconds(1f); // AI delay for realism
+        List<Vector2Int> validTargets = new List<Vector2Int>();
+        for (int x = 0; x < player1Grid.columns; x++)
+        {
+            for (int y = 0; y < player1Grid.rows; y++)
+            {
+                var cell = player1Grid.GetCell(new Vector2Int(x, y));
+                if (cell != null && (cell.State == CellState.Empty || cell.State == CellState.Ship))
+                {
+                    validTargets.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+        if (validTargets.Count > 0)
+        {
+            var rand = new System.Random();
+            var target = validTargets[rand.Next(validTargets.Count)];
+            player2Cannon.targetGrid = player1Grid;
+            player2Cannon.shipSpawner = player1Spawner;
+            player2Cannon.FireAtCell(target);
             NextBattleTurn();
         }
     }
