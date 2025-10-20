@@ -15,6 +15,17 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     // occupied cells when placed
     public Cell[] OccupiedCells { get; private set; }
+
+    // Returns true if all occupied cells are hit
+    public bool IsSunk()
+    {
+        if (OccupiedCells == null || OccupiedCells.Length == 0) return false;
+        foreach (var c in OccupiedCells)
+        {
+            if (c == null || c.State != CellState.Hit) return false;
+        }
+        return true;
+    }
     private RectTransform rect;
     private CanvasGroup canvasGroup;
     private Transform originalParent;

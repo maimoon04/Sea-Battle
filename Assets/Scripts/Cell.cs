@@ -137,7 +137,7 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				break;
 			case CellState.Hit:
 				if (icon != null) icon.enabled = true;
-				// set hit sprite
+					icon.color = Color.black * 0.8f;
 				break;
 		}
 	}

@@ -189,6 +189,8 @@ MonoBehaviour:
   cannonballPrefab: {fileID: 6539168055054340386, guid: 5f89c4ffd74824746b497ebabb2f8889, type: 3}
   parent: {fileID: 1851968469}
   fireSound: {fileID: 0}
+  turnManager: {fileID: 2115035723}
+  shipSpawner: {fileID: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1463,6 +1465,8 @@ MonoBehaviour:
   cannonballPrefab: {fileID: 6539168055054340386, guid: 5f89c4ffd74824746b497ebabb2f8889, type: 3}
   parent: {fileID: 1851968469}
   fireSound: {fileID: 0}
+  turnManager: {fileID: 2115035723}
+  shipSpawner: {fileID: 0}
 --- !u!4 &1689109029
 Transform:
   m_ObjectHideFlags: 0
@@ -1620,6 +1624,9 @@ MonoBehaviour:
   player2ReadyButton: {fileID: 1440508091}
   player2Cannon: {fileID: 1689109028}
   currentBattlePlayer: 1
+  player1Score: 0
+  player2Score: 0
+  gameOver: 0
 --- !u!4 &2115035724
 Transform:
   m_ObjectHideFlags: 0
