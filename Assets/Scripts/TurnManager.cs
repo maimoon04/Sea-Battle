@@ -11,12 +11,19 @@ public class TurnManager : MonoBehaviour
     public GridController player1Grid;
     public Button player1ReadyButton;
 
+    public CannonController player1Cannon;
+
     [Header("Player B (second)")]
     public ShipSpawner player2Spawner;
     public GridController player2Grid;
     public Button player2ReadyButton;
 
+    public CannonController player2Cannon;
+
     public TurnState State { get; private set; } = TurnState.Player1Placement;
+
+    // 1 = player1's turn, 2 = player2's turn
+    public int currentBattlePlayer = 1;
 
     void Start()
     {
@@ -61,7 +68,14 @@ public class TurnManager : MonoBehaviour
 
         UpdateReadyButtons();
 
-        // TODO: start battle turn logic (alternating firing)
+        // Subscribe to cell click events for both grids
+        if (player1Grid != null)
+            player1Grid.OnCellClicked.AddListener(OnPlayer1GridCellClicked);
+        if (player2Grid != null)
+            player2Grid.OnCellClicked.AddListener(OnPlayer2GridCellClicked);
+
+        currentBattlePlayer = 1; // Player 1 starts
+        UpdateBattleUI();
     }
 
     void SetPlacementEnabled(GridController grid, ShipSpawner spawner, bool enabled)
@@ -70,11 +84,43 @@ public class TurnManager : MonoBehaviour
         {
             grid.allowPlacement = enabled;
         }
+    }
 
-        if (spawner != null)
+    // Called when a cell is clicked on player 2's grid (player 1 fires)
+    void OnPlayer2GridCellClicked(Vector2Int coord)
+    {
+        if (State == TurnState.Battle && currentBattlePlayer == 2) return;
+        if (player1Cannon != null && player2Grid != null)
         {
-          //  spawner.container.gameObject.SetActive(enabled);
+            player1Cannon.targetGrid = player2Grid;
+            player1Cannon.FireAtCell(coord);
+            NextBattleTurn();
         }
+    }
+
+    // Called when a cell is clicked on player 1's grid (player 2 fires)
+    void OnPlayer1GridCellClicked(Vector2Int coord)
+    {
+        if (State == TurnState.Battle && currentBattlePlayer == 1) return;
+        if (player2Cannon != null && player1Grid != null)
+        {
+            player2Cannon.targetGrid = player1Grid;
+            player2Cannon.FireAtCell(coord);
+            NextBattleTurn();
+        }
+    }
+
+    void NextBattleTurn()
+    {
+        // Alternate turn
+        currentBattlePlayer = (currentBattlePlayer == 1) ? 2 : 1;
+        UpdateBattleUI();
+    }
+
+    void UpdateBattleUI()
+    {
+        // Optionally: highlight current player's grid, show turn indicator, etc.
+        // For now, you can add UI feedback here if desired.
     }
 
     void UpdateReadyButtons()
