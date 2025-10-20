@@ -84,16 +84,9 @@ public class GridController : MonoBehaviour
 				Button btn = go.GetComponent<Button>();
 				if (btn != null)
 				{
-					if (!isOpponentGrid)
-					{
-						// capture the coordinate value to avoid closure issues
-						Vector2Int captured = c.coordinate;
-                     btn.onClick.AddListener(() => OnCellClicked?.Invoke(captured));
-					}
-					else
-					{
-						btn.interactable = false;
-					}
+					Vector2Int captured = c.coordinate;
+					btn.onClick.AddListener(() => OnCellClicked?.Invoke(captured));
+				
 				}
 			}
 		}
