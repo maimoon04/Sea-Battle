@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Cerchio_128_0_0: 2945795756331091044
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
