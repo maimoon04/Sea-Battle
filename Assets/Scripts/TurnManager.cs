@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine.SocialPlatforms.Impl;
 
 public enum TurnState { Player1Placement, Player2Placement, Battle }
 public enum GameMode { PvP, PvAI }
@@ -25,7 +27,9 @@ public class TurnManager : MonoBehaviour
     public Button player2RandomPlaceButton; // New button for random placement
     public CanvasGroup player2GridCanvasGroup; // For fading
     public CannonController player2Cannon;
-
+    public TextMeshProUGUI scoreText;
+    public GameObject gameOverPanel;
+    public GameObject ScoringPanel;
     public TurnState State { get; private set; } = TurnState.Player1Placement;
     public GameMode gameMode = GameMode.PvP;
 
@@ -235,7 +239,8 @@ public class TurnManager : MonoBehaviour
             player1GridCanvasGroup.alpha = 1f;
         if (player2GridCanvasGroup != null)
             player2GridCanvasGroup.alpha = 1f;
-
+        ScoringPanel.SetActive(true);
+       
         // Set up initial ship visibility
         ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true); // Player 1 starts
         ShipVisibilityManager.UpdateShipVisibility(player2Spawner, false);
@@ -353,7 +358,7 @@ public class TurnManager : MonoBehaviour
             if (AllShipsSunk(player2Spawner))
             {
                 gameOver = true;
-                Debug.Log("Player 1 wins!");
+                scoreText.text = $"<color=#0077ff>Player 1</color> wins!";
                 // Show all ships when game is over
                 ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true);
                 ShipVisibilityManager.UpdateShipVisibility(player2Spawner, true);
@@ -368,7 +373,7 @@ public class TurnManager : MonoBehaviour
             if (AllShipsSunk(player1Spawner))
             {
                 gameOver = true;
-                Debug.Log("Player 2 wins!");
+                scoreText.text = $"<color=#ff3333>Player 2</color> wins!";
                 // Show all ships when game is over
                 ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true);
                 ShipVisibilityManager.UpdateShipVisibility(player2Spawner, true);
@@ -405,7 +410,9 @@ public class TurnManager : MonoBehaviour
 
     void UpdateBattleUI()
     {
-        // Update cannon states based on current turn
+        // Update cannon states and score with colored text
+       
+        scoreText.text = $"<color=#0077ff>{player1Score}</color>  |  <color=#ff3333> {player2Score}</color>";
         if (player1Cannon != null)
             player1Cannon.cannonballParent.SetActive(currentBattlePlayer == 1);
         if (player2Cannon != null)

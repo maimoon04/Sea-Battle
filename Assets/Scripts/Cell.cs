@@ -14,7 +14,7 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 	public Image icon; 
 	public ParticleSystem hitEffect; // put hit/miss sprite here
 
-
+    public Sprite crossedSprite;
 	private CellState state = CellState.Empty;
 
 
@@ -132,6 +132,7 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				Debug.Log("Ship placed at " + coordinate);
 				break;
 			case CellState.Miss:
+			   icon.sprite = crossedSprite;
 				Debug.Log("Missed shot at " + coordinate);
 				if (icon != null) icon.enabled = true;
 				// set miss sprite

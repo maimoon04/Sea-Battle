@@ -132,6 +132,7 @@ MonoBehaviour:
   background: {fileID: 3541865382980291293}
   icon: {fileID: 6699891392031880733}
   hitEffect: {fileID: 5541324954899400662}
+  crossedSprite: {fileID: 6911794167301903363, guid: 7bda19d5f93acd14c8413903de5c320e, type: 3}
 --- !u!222 &7989472559839186598
 CanvasRenderer:
   m_ObjectHideFlags: 0
