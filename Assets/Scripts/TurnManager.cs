@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public enum TurnState { Player1Placement, Player2Placement, Battle }
 public enum GameMode { PvP, PvAI }
 
+// Add a helper class to manage ship visibility
+
 public class TurnManager : MonoBehaviour
 {
     [Header("Player A (first)")]
@@ -223,13 +225,18 @@ public class TurnManager : MonoBehaviour
         if (player2RandomPlaceButton != null)
             player2RandomPlaceButton.gameObject.SetActive(false);
 
-         player1ReadyButton.gameObject.SetActive(false);
-         player2ReadyButton.gameObject.SetActive(false);
+        player1ReadyButton.gameObject.SetActive(false);
+        player2ReadyButton.gameObject.SetActive(false);
+
         // Restore full visibility to both grids
         if (player1GridCanvasGroup != null)
             player1GridCanvasGroup.alpha = 1f;
         if (player2GridCanvasGroup != null)
             player2GridCanvasGroup.alpha = 1f;
+
+        // Set up initial ship visibility
+        ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true); // Player 1 starts
+        ShipVisibilityManager.UpdateShipVisibility(player2Spawner, false);
 
       
 
@@ -329,6 +336,13 @@ public class TurnManager : MonoBehaviour
         if (gameOver) return;
         // Determine which player is the attacker and which is the defender
         bool defenderIsPlayer1 = (defenderGrid == player1Grid);
+        
+        // Make the sunk ship visible
+        if (sunkShip != null && sunkShip.image != null)
+        {
+            sunkShip.image.enabled = true; // Always show sunk ships
+        }
+        
         if (!defenderIsPlayer1)
         {
             // Player 1 sunk a ship
@@ -338,6 +352,9 @@ public class TurnManager : MonoBehaviour
             {
                 gameOver = true;
                 Debug.Log("Player 1 wins!");
+                // Show all ships when game is over
+                ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true);
+                ShipVisibilityManager.UpdateShipVisibility(player2Spawner, true);
                 OnGameOver(1);
             }
         }
@@ -350,6 +367,9 @@ public class TurnManager : MonoBehaviour
             {
                 gameOver = true;
                 Debug.Log("Player 2 wins!");
+                // Show all ships when game is over
+                ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true);
+                ShipVisibilityManager.UpdateShipVisibility(player2Spawner, true);
                 OnGameOver(2);
             }
         }
@@ -394,6 +414,10 @@ public class TurnManager : MonoBehaviour
             player1GridCanvasGroup.alpha = currentBattlePlayer == 2 ? 1f : 0.7f;
         if (player2GridCanvasGroup != null)
             player2GridCanvasGroup.alpha = currentBattlePlayer == 1 ? 1f : 0.7f;
+
+        // Update ship visibility based on current turn
+        ShipVisibilityManager.UpdateShipVisibility(player1Spawner, currentBattlePlayer == 1);
+        ShipVisibilityManager.UpdateShipVisibility(player2Spawner, currentBattlePlayer == 2 );
     }
 
 
@@ -420,6 +444,7 @@ public class TurnManager : MonoBehaviour
         {
             player1Ready = true;
             player1ReadyButton.gameObject.SetActive(false);
+            ShipVisibilityManager.UpdateShipVisibility(player1Spawner, false);
             if (player1Spawner != null && !player1Spawner.AllShipsPlaced())
             {
                 Debug.Log("Player 1: Not all ships placed.");
@@ -431,6 +456,7 @@ public class TurnManager : MonoBehaviour
         {
             player2Ready = true;
             player2ReadyButton.gameObject.SetActive(false);
+            ShipVisibilityManager.UpdateShipVisibility(player2Spawner, false);
             if (player2Spawner != null && !player2Spawner.AllShipsPlaced())
             {
                 Debug.Log("Player 2: Not all ships placed.");

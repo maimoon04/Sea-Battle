@@ -70,6 +70,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         if (image != null && data != null)
             image.sprite = data.shipSprite;
 
+        image.SetNativeSize();
         name = data != null ? data.shipName : "Ship";
 
         if (rect != null && data != null)
@@ -107,6 +108,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     {
         isVertical = !isVertical;
         transform.rotation = Quaternion.Euler(0, 0, isVertical ? 90f : 0f);
+          image.SetNativeSize();
     }
 
     // Drag handlers
@@ -186,3 +188,30 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         Destroy(gameObject);
     }
 }
+
+public class ShipVisibilityManager
+{
+    public static void UpdateShipVisibility(ShipSpawner spawner, bool isVisible)
+    {
+        if (spawner != null && spawner.spawnedShips != null)
+        {
+            foreach (var ship in spawner.spawnedShips)
+            {
+                if (ship != null && ship.image != null)
+                {
+                    // Only show unsunk ships if visible is true
+                    if (isVisible)
+                    {
+                        ship.image.enabled = true;
+                    }
+                    else
+                    {
+                        // When hiding, only show if ship is sunk
+                        ship.image.enabled = ship.IsSunk();
+                    }
+                }
+            }
+        }
+    }
+}
+

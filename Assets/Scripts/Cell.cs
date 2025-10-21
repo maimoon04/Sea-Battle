@@ -129,7 +129,6 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				break;
 			case CellState.Ship:
 				Debug.Log("Ship placed at " + coordinate);
-				if (icon != null) icon.enabled = true;
 				break;
 			case CellState.Miss:
 				Debug.Log("Missed shot at " + coordinate);
