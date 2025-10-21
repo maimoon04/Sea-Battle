@@ -12,14 +12,16 @@ public class TurnManager : MonoBehaviour
     public ShipSpawner player1Spawner;
     public GridController player1Grid;
     public Button player1ReadyButton;
-
+    public Button player1RandomPlaceButton; // New button for random placement
+    public CanvasGroup player1GridCanvasGroup; // For fading
     public CannonController player1Cannon;
 
     [Header("Player B (second)")]
     public ShipSpawner player2Spawner;
     public GridController player2Grid;
     public Button player2ReadyButton;
-
+    public Button player2RandomPlaceButton; // New button for random placement
+    public CanvasGroup player2GridCanvasGroup; // For fading
     public CannonController player2Cannon;
 
     public TurnState State { get; private set; } = TurnState.Player1Placement;
@@ -33,32 +35,62 @@ public class TurnManager : MonoBehaviour
     public int player2Score = 0;
     public bool gameOver = false;
 
-    void Start()
+    public void StartGame(bool isAIMode)
     {
-        SetGameMode(gameMode);
+        gameMode = isAIMode ? GameMode.PvAI : GameMode.PvP;
+        
         // Hook up ready buttons
-        if (player1ReadyButton != null) player1ReadyButton.onClick.AddListener(() => OnPlayerReady(1));
-        if (player2ReadyButton != null) player2ReadyButton.onClick.AddListener(() => OnPlayerReady(2));
+        if (player1ReadyButton != null) 
+        {
+            player1ReadyButton.onClick.AddListener(() => OnPlayerReady(1));
+            player1ReadyButton.gameObject.SetActive(false); // Start hidden until ships placed
+        }
+        if (player2ReadyButton != null) 
+        {
+            player2ReadyButton.onClick.AddListener(() => OnPlayerReady(2));
+            player2ReadyButton.gameObject.SetActive(false); // Start hidden until ships placed
+        }
 
-        // You can set gameMode from UI before this
+        // Hook up random placement buttons
+        if (player1RandomPlaceButton != null) 
+            player1RandomPlaceButton.onClick.AddListener(() => OnRandomPlacement(1));
+        if (player2RandomPlaceButton != null)
+            player2RandomPlaceButton.onClick.AddListener(() => OnRandomPlacement(2));
+
+        // Start the game
         EnterPlayer1Placement();
-    }
-
-    // Call this from UI to set game mode before game starts
-    public void SetGameMode(GameMode mode)
-    {
-        gameMode = mode;
     }
 
     void EnterPlayer1Placement()
     {
         State = TurnState.Player1Placement;
-        // spawn for player 1
-        if (player1Spawner != null) player1Spawner.SpawnAll();
+        
+        // Spawn ships for player 1
+        if (player1Spawner != null)
+        {
+        // Clear any existing ships
+            player1Spawner.SpawnAll();
+        }
 
-        // enable player1 grid and spawner UI, disable player2
+        // Enable player1 grid and spawner UI, disable player2
         SetPlacementEnabled(player1Grid, player1Spawner, true);
         SetPlacementEnabled(player2Grid, player2Spawner, false);
+
+        // Show random placement button for player 1, hide for player 2
+        if (player1RandomPlaceButton != null)
+            player1RandomPlaceButton.gameObject.SetActive(true);
+        if (player2RandomPlaceButton != null)
+            player2RandomPlaceButton.gameObject.SetActive(false);
+
+        // Fade the enemy grid
+        if (player2GridCanvasGroup != null)
+            player2GridCanvasGroup.alpha = 0.3f;
+        if (player1GridCanvasGroup != null)
+            player1GridCanvasGroup.alpha = 1f;
+
+        // Hide ready button until ships are placed
+        if (player1ReadyButton != null)
+            player1ReadyButton.gameObject.SetActive(false);
 
         UpdateReadyButtons();
     }
@@ -66,10 +98,28 @@ public class TurnManager : MonoBehaviour
     void EnterPlayer2Placement()
     {
         State = TurnState.Player2Placement;
-         if (player2Spawner != null) player2Spawner.SpawnAll();
-            SetPlacementEnabled(player1Grid, player1Spawner, false);
+        
+        if (player2Spawner != null)
+        {
+           // Clear any existing ships
+            player2Spawner.SpawnAll();
+        }
+        
+        SetPlacementEnabled(player1Grid, player1Spawner, false);
         SetPlacementEnabled(player2Grid, player2Spawner, true);
-            
+        
+        // Show/hide random placement buttons
+        if (player1RandomPlaceButton != null)
+            player1RandomPlaceButton.gameObject.SetActive(false);
+        if (player2RandomPlaceButton != null && gameMode != GameMode.PvAI)
+            player2RandomPlaceButton.gameObject.SetActive(true);
+
+        // Fade grids appropriately
+        if (player1GridCanvasGroup != null)
+            player1GridCanvasGroup.alpha = 0.3f;
+        if (player2GridCanvasGroup != null)
+            player2GridCanvasGroup.alpha = 1f;
+
         if (gameMode == GameMode.PvAI)
         {
             // AI: place ships randomly
@@ -82,8 +132,48 @@ public class TurnManager : MonoBehaviour
         }
         else
         {
+            // Hide ready button until ships are placed
+            if (player2ReadyButton != null)
+                player2ReadyButton.gameObject.SetActive(false);
+            
             // PvP: normal placement
             UpdateReadyButtons();
+        }
+    }
+
+    // Handle random placement button clicks
+    void OnRandomPlacement(int playerIndex)
+    {
+        if (playerIndex == 1)
+        {
+            // Clear any manually placed ships first
+            if (player1Spawner != null)
+            {
+                foreach (var ship in player1Spawner.spawnedShips)
+                {
+                    if (ship.isPlaced)
+                        ship.RemoveFromGrid();
+                }
+                PlaceShipsRandomly(player1Spawner, player1Grid);
+                // Show ready button since all ships are now placed
+                if (player1ReadyButton != null)
+                    player1ReadyButton.gameObject.SetActive(true);
+            }
+        }
+        else if (playerIndex == 2 && gameMode != GameMode.PvAI)
+        {
+            if (player2Spawner != null)
+            {
+                foreach (var ship in player2Spawner.spawnedShips)
+                {
+                    if (ship.isPlaced)
+                        ship.RemoveFromGrid();
+                }
+                PlaceShipsRandomly(player2Spawner, player2Grid);
+                // Show ready button since all ships are now placed
+                if (player2ReadyButton != null)
+                    player2ReadyButton.gameObject.SetActive(true);
+            }
         }
     }
     // Randomly place all ships for the AI
@@ -113,9 +203,22 @@ public class TurnManager : MonoBehaviour
     void EnterBattle()
     {
         State = TurnState.Battle;
+        
         // both grids active for firing turns; spawners disabled
         SetPlacementEnabled(player1Grid, player1Spawner, false);
         SetPlacementEnabled(player2Grid, player2Spawner, false);
+
+        // Hide placement buttons
+        if (player1RandomPlaceButton != null)
+            player1RandomPlaceButton.gameObject.SetActive(false);
+        if (player2RandomPlaceButton != null)
+            player2RandomPlaceButton.gameObject.SetActive(false);
+
+        // Restore full visibility to both grids
+        if (player1GridCanvasGroup != null)
+            player1GridCanvasGroup.alpha = 1f;
+        if (player2GridCanvasGroup != null)
+            player2GridCanvasGroup.alpha = 1f;
 
         UpdateReadyButtons();
 
@@ -262,10 +365,19 @@ public class TurnManager : MonoBehaviour
 
     void UpdateReadyButtons()
     {
-        if (player1ReadyButton != null)
-            player1ReadyButton.gameObject.SetActive(State == TurnState.Player1Placement);
-        if (player2ReadyButton != null)
-            player2ReadyButton.gameObject.SetActive(State == TurnState.Player2Placement);
+        // Only show ready buttons during placement phase AND when all ships are placed
+        if (State == TurnState.Player1Placement)
+        {
+            bool allShipsPlaced = (player1Spawner != null && player1Spawner.AllShipsPlaced());
+            if (player1ReadyButton != null)
+                player1ReadyButton.gameObject.SetActive(allShipsPlaced);
+        }
+        else if (State == TurnState.Player2Placement && gameMode != GameMode.PvAI)
+        {
+            bool allShipsPlaced = (player2Spawner != null && player2Spawner.AllShipsPlaced());
+            if (player2ReadyButton != null)
+                player2ReadyButton.gameObject.SetActive(allShipsPlaced);
+        }
     }
 
     void OnPlayerReady(int playerIndex)
