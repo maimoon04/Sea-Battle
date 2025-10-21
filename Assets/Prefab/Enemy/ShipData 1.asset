@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7138da3c0da2e794fa9c918f9a4a522b, type: 3}
-  m_Name: ShipData 2
+  m_Name: ShipData 1
   m_EditorClassIdentifier: 
-  shipName: bigboat
-  length: 4
-  shipSprite: {fileID: -7981281281565830343, guid: cea9aeb945575b74e90c8dda2175af27, type: 3}
+  shipName: boat
+  length: 3
+  shipSprite: {fileID: -3264246072216595527, guid: 7c519af66e2cdb645ace781976e69730, type: 3}

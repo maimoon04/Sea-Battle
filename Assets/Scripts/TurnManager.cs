@@ -166,6 +166,7 @@ public class TurnManager : MonoBehaviour
                         ship.RemoveFromGrid();
                 }
                 PlaceShipsRandomly(player1Spawner, player1Grid);
+                
                 // Show ready button since all ships are now placed
                 if (player1ReadyButton != null)
                     player1ReadyButton.gameObject.SetActive(true);
@@ -209,6 +210,7 @@ public class TurnManager : MonoBehaviour
                 attempts++;
             }
         }
+        spawner.TurnOffAllShips();
     }
 
     void EnterBattle()
@@ -429,12 +431,18 @@ public class TurnManager : MonoBehaviour
             bool allShipsPlaced = (player1Spawner != null && player1Spawner.AllShipsPlaced());
             if (player1ReadyButton != null)
                 player1ReadyButton.gameObject.SetActive(allShipsPlaced);
+                
+            if(allShipsPlaced)
+                player1Spawner.TurnOffAllShips();
         }
         else if (!player2Ready &&  gameMode != GameMode.PvAI)
         {
             bool allShipsPlaced = (player2Spawner != null && player2Spawner.AllShipsPlaced());
             if (player2ReadyButton != null)
                 player2ReadyButton.gameObject.SetActive(allShipsPlaced);
+
+            if(allShipsPlaced)
+                player2Spawner.TurnOffAllShips();
         }
     }
 

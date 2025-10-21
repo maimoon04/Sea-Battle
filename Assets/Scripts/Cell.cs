@@ -11,7 +11,8 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 {
 	public Vector2Int coordinate;
 	public Image background;
-	public Image icon; // put hit/miss sprite here
+	public Image icon; 
+	public ParticleSystem hitEffect; // put hit/miss sprite here
 
 
 	private CellState state = CellState.Empty;
@@ -136,6 +137,8 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				// set miss sprite
 				break;
 			case CellState.Hit:
+			    hitEffect.gameObject.SetActive(true);
+				hitEffect.Play();
 				Debug.Log("Hit at " + coordinate);
 				if (icon != null) icon.enabled = true;
 					icon.color = Color.black * 0.8f;

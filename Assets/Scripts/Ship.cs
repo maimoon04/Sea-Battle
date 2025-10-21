@@ -64,23 +64,45 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     /// Initialize the ship visuals and data from a ShipData asset.
     /// cellSize and spacing are used to size the RectTransform so ships will align with a grid layout.
     /// </summary>
+    private float currentCellSize;
+    private float currentSpacing;
+
     public void Initialize(ShipData data, float cellSize = 10f, float spacing = 0f)
     {
         shipData = data;
-        if (image != null && data != null)
-            image.sprite = data.shipSprite;
+        currentCellSize = cellSize;
+        currentSpacing = spacing;
 
-        image.SetNativeSize();
+        if (image != null && data != null)
+        {
+            image.sprite = data.shipSprite;
+            image.SetNativeSize();
+        }
+
         name = data != null ? data.shipName : "Ship";
 
         if (rect != null && data != null)
         {
-            float width = data.length * cellSize + (data.length - 1) * spacing;
-            rect.sizeDelta = new Vector2(width, cellSize);
+            UpdateShipSize();
         }
 
         // Ensure rotation matches current orientation
-        transform.rotation = Quaternion.Euler(0, 0, isVertical ? 90f : 0f);
+        ApplyRotation();
+    }
+
+    private void UpdateShipSize()
+    {
+        if (shipData == null || rect == null) return;
+
+        float length = shipData.length * currentCellSize + (shipData.length - 1) * currentSpacing;
+        if (isVertical)
+        {
+            rect.sizeDelta = new Vector2(currentCellSize, length);
+        }
+        else
+        {
+            rect.sizeDelta = new Vector2(length, currentCellSize);
+        }
     }
 
     public void PlaceOnGrid(Cell[] cells)
@@ -107,8 +129,21 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     public void Rotate()
     {
         isVertical = !isVertical;
+        image.SetNativeSize();
+        UpdateShipSize(); // Update size before rotation
+        ApplyRotation();
+    }
+
+    private void ApplyRotation()
+    {
+        if (rect == null) return;
+
+        // Reset rotation and pivot
+        transform.rotation = Quaternion.identity;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
+        // Apply rotation
         transform.rotation = Quaternion.Euler(0, 0, isVertical ? 90f : 0f);
-          image.SetNativeSize();
     }
 
     // Drag handlers

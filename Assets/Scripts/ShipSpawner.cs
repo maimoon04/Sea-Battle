@@ -61,6 +61,16 @@ public class ShipSpawner : MonoBehaviour
         }
     }
 
+    public void TurnOffAllShips()
+    {
+        foreach (var ship in spawnedShips)
+        {
+            if (ship != null)
+            {
+                ship.image.raycastTarget = false;
+            }
+        }
+    }
     // Returns true when all spawned ships have been placed on the grid
     public bool AllShipsPlaced()
     {
