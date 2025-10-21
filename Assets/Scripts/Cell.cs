@@ -128,14 +128,16 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				if (icon != null) icon.enabled = false;
 				break;
 			case CellState.Ship:
-				// For player's grid show ship indicator; for enemy hide it (controlled externally)
+				Debug.Log("Ship placed at " + coordinate);
 				if (icon != null) icon.enabled = true;
 				break;
 			case CellState.Miss:
+				Debug.Log("Missed shot at " + coordinate);
 				if (icon != null) icon.enabled = true;
 				// set miss sprite
 				break;
 			case CellState.Hit:
+				Debug.Log("Hit at " + coordinate);
 				if (icon != null) icon.enabled = true;
 					icon.color = Color.black * 0.8f;
 				break;

@@ -260,19 +260,23 @@ public class TurnManager : MonoBehaviour
         {
             player1Cannon.targetGrid = player2Grid;
             player1Cannon.shipSpawner = player2Spawner;
-            player1Cannon.FireAtCell(coord);
-            NextBattleTurn();
-            // If AI mode, let AI fire after player 1
-            if (gameMode == GameMode.PvAI && !gameOver)
-            {
-                StartCoroutine(AIFireCoroutine());
-            }
+            
+            // Fire and wait for completion before starting AI turn
+            player1Cannon.FireAtCell(coord, () => {
+                NextBattleTurn();
+                // Only start AI turn after player's shot is complete
+                if (gameMode == GameMode.PvAI && !gameOver)
+                {
+                    StartCoroutine(AIFireCoroutine());
+                }
+            });
         }
     }
 
     // Called when a cell is clicked on player 1's grid (player 2 fires)
     void OnPlayer1GridCellClicked(Vector2Int coord)
     {
+
         if (gameMode == GameMode.PvAI) return; // AI never clicks
         if (State == TurnState.Battle && currentBattlePlayer == 1) return;
         if (gameOver) return;
@@ -280,14 +284,16 @@ public class TurnManager : MonoBehaviour
         {
             player2Cannon.targetGrid = player1Grid;
             player2Cannon.shipSpawner = player1Spawner;
-            player2Cannon.FireAtCell(coord);
-            NextBattleTurn();
+            player2Cannon.FireAtCell(coord,  NextBattleTurn);
         }
     }
     // AI fires at a random valid cell on player 1's grid
     IEnumerator AIFireCoroutine()
     {
-        yield return new WaitForSeconds(1f); // AI delay for realism
+        // Add a natural delay before AI starts to think
+        yield return new WaitForSeconds(1.5f);
+
+        // Find valid targets
         List<Vector2Int> validTargets = new List<Vector2Int>();
         for (int x = 0; x < player1Grid.columns; x++)
         {
@@ -300,14 +306,21 @@ public class TurnManager : MonoBehaviour
                 }
             }
         }
+
         if (validTargets.Count > 0)
         {
+            // Select target
             var rand = new System.Random();
             var target = validTargets[rand.Next(validTargets.Count)];
+            
+            // Setup AI cannon
             player2Cannon.targetGrid = player1Grid;
             player2Cannon.shipSpawner = player1Spawner;
-            player2Cannon.FireAtCell(target);
-            NextBattleTurn();
+            
+            // Fire and handle turn completion
+            player2Cannon.FireAtCell(target, () => {
+                NextBattleTurn();
+            });
         }
     }
     // Called by CannonController when a ship is sunk
@@ -370,8 +383,17 @@ public class TurnManager : MonoBehaviour
 
     void UpdateBattleUI()
     {
-        // Optionally: highlight current player's grid, show turn indicator, etc.
-        // For now, you can add UI feedback here if desired.
+        // Update cannon states based on current turn
+        if (player1Cannon != null)
+            player1Cannon.cannonballParent.SetActive(currentBattlePlayer == 1);
+        if (player2Cannon != null)
+            player2Cannon.cannonballParent.SetActive(currentBattlePlayer == 2);
+
+        // Update grid visuals to indicate active turn
+        if (player1GridCanvasGroup != null)
+            player1GridCanvasGroup.alpha = currentBattlePlayer == 2 ? 1f : 0.7f;
+        if (player2GridCanvasGroup != null)
+            player2GridCanvasGroup.alpha = currentBattlePlayer == 1 ? 1f : 0.7f;
     }
 
 
