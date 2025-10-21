@@ -30,11 +30,21 @@ public class TurnManager : MonoBehaviour
     // 1 = player1's turn, 2 = player2's turn
     public int currentBattlePlayer = 1;
 
+    void Update()
+    {
+        if (State != TurnState.Battle)
+        {
+            // Continuously check if all ships are placed and update ready button visibility
+            UpdateReadyButtons();
+        }
+    }
+
     // Score tracking
     public int player1Score = 0;
     public int player2Score = 0;
     public bool gameOver = false;
-
+    public bool player1Ready = false;
+    public bool player2Ready = false;
     public void StartGame(bool isAIMode)
     {
         gameMode = isAIMode ? GameMode.PvAI : GameMode.PvP;
@@ -68,8 +78,9 @@ public class TurnManager : MonoBehaviour
         // Spawn ships for player 1
         if (player1Spawner != null)
         {
-        // Clear any existing ships
+            // Clear any existing ships
             player1Spawner.SpawnAll();
+          
         }
 
         // Enable player1 grid and spawner UI, disable player2
@@ -92,7 +103,7 @@ public class TurnManager : MonoBehaviour
         if (player1ReadyButton != null)
             player1ReadyButton.gameObject.SetActive(false);
 
-        UpdateReadyButtons();
+       
     }
 
     void EnterPlayer2Placement()
@@ -101,7 +112,7 @@ public class TurnManager : MonoBehaviour
         
         if (player2Spawner != null)
         {
-           // Clear any existing ships
+           
             player2Spawner.SpawnAll();
         }
         
@@ -134,10 +145,8 @@ public class TurnManager : MonoBehaviour
         {
             // Hide ready button until ships are placed
             if (player2ReadyButton != null)
-                player2ReadyButton.gameObject.SetActive(false);
-            
-            // PvP: normal placement
-            UpdateReadyButtons();
+                player2ReadyButton.gameObject.SetActive(false); 
+           
         }
     }
 
@@ -214,13 +223,15 @@ public class TurnManager : MonoBehaviour
         if (player2RandomPlaceButton != null)
             player2RandomPlaceButton.gameObject.SetActive(false);
 
+         player1ReadyButton.gameObject.SetActive(false);
+         player2ReadyButton.gameObject.SetActive(false);
         // Restore full visibility to both grids
         if (player1GridCanvasGroup != null)
             player1GridCanvasGroup.alpha = 1f;
         if (player2GridCanvasGroup != null)
             player2GridCanvasGroup.alpha = 1f;
 
-        UpdateReadyButtons();
+      
 
         // Subscribe to cell click events for both grids
         if (player1Grid != null)
@@ -363,16 +374,17 @@ public class TurnManager : MonoBehaviour
         // For now, you can add UI feedback here if desired.
     }
 
+
     void UpdateReadyButtons()
     {
         // Only show ready buttons during placement phase AND when all ships are placed
-        if (State == TurnState.Player1Placement)
+        if (!player1Ready )
         {
             bool allShipsPlaced = (player1Spawner != null && player1Spawner.AllShipsPlaced());
             if (player1ReadyButton != null)
                 player1ReadyButton.gameObject.SetActive(allShipsPlaced);
         }
-        else if (State == TurnState.Player2Placement && gameMode != GameMode.PvAI)
+        else if (!player2Ready &&  gameMode != GameMode.PvAI)
         {
             bool allShipsPlaced = (player2Spawner != null && player2Spawner.AllShipsPlaced());
             if (player2ReadyButton != null)
@@ -384,7 +396,8 @@ public class TurnManager : MonoBehaviour
     {
         if (playerIndex == 1 && State == TurnState.Player1Placement)
         {
-            // ensure all ships placed
+            player1Ready = true;
+            player1ReadyButton.gameObject.SetActive(false);
             if (player1Spawner != null && !player1Spawner.AllShipsPlaced())
             {
                 Debug.Log("Player 1: Not all ships placed.");
@@ -394,6 +407,8 @@ public class TurnManager : MonoBehaviour
         }
         else if (playerIndex == 2 && State == TurnState.Player2Placement)
         {
+            player2Ready = true;
+            player2ReadyButton.gameObject.SetActive(false);
             if (player2Spawner != null && !player2Spawner.AllShipsPlaced())
             {
                 Debug.Log("Player 2: Not all ships placed.");
