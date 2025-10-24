@@ -28,6 +28,7 @@ public class TurnManager : MonoBehaviour
     public CanvasGroup player2GridCanvasGroup; // For fading
     public CannonController player2Cannon;
     public TextMeshProUGUI scoreText;
+     public TextMeshProUGUI gameOverText;
     public GameObject gameOverPanel;
     public GameObject ScoringPanel;
     public TurnState State { get; private set; } = TurnState.Player1Placement;
@@ -203,14 +204,14 @@ public class TurnManager : MonoBehaviour
             while (!placed && attempts < 50)
             {
                 Debug.Log($"Placing ship {ship.shipData.shipName}, attempt {attempts + 1}");
-                bool vertical = rand.Next(0, 2) == 0;
-                int maxX = vertical ? grid.columns - ship.shipData.length : grid.columns - 1;
-                int maxY = vertical ? grid.rows - 1 : grid.rows - ship.shipData.length;
+                
+                int maxX =  grid.columns - 1;
+                int maxY =  grid.rows - ship.shipData.length;
                 int x = rand.Next(0, maxX + 1);
                 int y = rand.Next(0, maxY + 1);
                 Vector2Int start = new Vector2Int(x, y);
-                ship.isVertical = vertical;
-                placed = grid.TryPlaceShip(ship, start, vertical);
+               
+                placed = grid.TryPlaceShip(ship, start, false);
                 attempts++;
             }
         }
@@ -397,7 +398,8 @@ public class TurnManager : MonoBehaviour
     // Called when a player wins
     void OnGameOver(int winner)
     {
-        // Add UI or logic for end of game here
+       gameOverPanel.SetActive(true);
+       gameOverText.text = $"Player {winner} Wins!";
         Debug.Log($"Game Over! Player {winner} wins.");
     }
 

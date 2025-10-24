@@ -23,6 +23,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         foreach (var c in OccupiedCells)
         {
             if (c == null || c.State != CellState.Hit) return false;
+            
         }
         return true;
     }
@@ -147,32 +148,55 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     }
 
     // Drag handlers
+    private Vector3 dragOffset;
+    private Canvas parentCanvas;
+    private Camera canvasCamera;
+
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (isPlaced && !allowReposition) return; // don't allow dragging placed ships unless allowed
+        if (isPlaced && !allowReposition) return;
         if (isPlaced && allowReposition)
         {
-            // free up currently occupied cells so preview/collision detect uses empty cells
             RemoveFromGrid();
         }
+
+        // Cache canvas and camera references
+        parentCanvas = GetComponentInParent<Canvas>();
+        canvasCamera = parentCanvas.worldCamera;
 
         DraggingShip = this;
         originalParent = transform.parent;
         originalPosition = transform.position;
 
-        // move to top-level canvas so it renders above other UI
-        Canvas c = GetComponentInParent<Canvas>();
-        if (c != null)
-            transform.SetParent(c.transform, true);
+        // Calculate offset for smooth dragging
+        RectTransformUtility.ScreenPointToWorldPointInRectangle(rect, eventData.position, canvasCamera, out Vector3 worldPoint);
+        dragOffset = transform.position - worldPoint;
 
-        canvasGroup.blocksRaycasts = false; // allow raycasts to go through to cells
+        // Move to canvas but maintain world position
+        Vector3 worldPos = transform.position;
+        transform.SetParent(parentCanvas.transform, false);
+        transform.position = worldPos;
+
+        // Ensure proper Z position for visibility
+        Vector3 pos = transform.position;
+        pos.z = 0;
+        transform.position = pos;
+
+        canvasGroup.blocksRaycasts = false;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
         if (isPlaced) return;
-        // follow pointer
-        transform.position = eventData.position;
+
+        // Convert screen point to world point
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+            rect, eventData.position, canvasCamera, out Vector3 worldPoint))
+        {
+            transform.position = new Vector3(worldPoint.x + dragOffset.x, 
+                                          worldPoint.y + dragOffset.y, 
+                                          0);
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -186,8 +210,14 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         // If not placed by drop target, return to original parent/position
         if (!isPlaced)
         {
-            transform.SetParent(originalParent, true);
-            transform.position = originalPosition;
+            Vector3 worldPos = originalPosition;
+            transform.SetParent(originalParent, false);
+            transform.position = worldPos;
+            
+            // Ensure proper Z position
+            Vector3 pos = transform.position;
+            pos.z = originalPosition.z;
+            transform.position = pos;
         }
 
         canvasGroup.blocksRaycasts = true;
@@ -243,6 +273,14 @@ public class ShipVisibilityManager
                     {
                         // When hiding, only show if ship is sunk
                         ship.image.enabled = ship.IsSunk();
+                        foreach (var c in ship.OccupiedCells)
+                        {
+                            if (c != null && ship.image.enabled)
+                            {
+                                // Reset cell visuals when hiding ships
+                                c.hitEffect.gameObject.SetActive(false);
+                            }  
+                             }
                     }
                 }
             }

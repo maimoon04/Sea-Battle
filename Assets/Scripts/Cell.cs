@@ -132,6 +132,7 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 				Debug.Log("Ship placed at " + coordinate);
 				break;
 			case CellState.Miss:
+				background.enabled = false;
 			   icon.sprite = crossedSprite;
 				Debug.Log("Missed shot at " + coordinate);
 				if (icon != null) icon.enabled = true;
