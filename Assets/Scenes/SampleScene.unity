@@ -327,8 +327,8 @@ MonoBehaviour:
   cannonballPrefab: {fileID: 6539168055054340386, guid: 5f89c4ffd74824746b497ebabb2f8889, type: 3}
   cannonballParent: {fileID: 1898974345}
   cannonTransform: {fileID: 716176475}
-  cannonRotationSpeed: 60
-  projectileSpeed: 600
+  cannonRotationSpeed: 2
+  projectileSpeed: 10
   fireSound: {fileID: 0}
   turnManager: {fileID: 2115035723}
   shipSpawner: {fileID: 0}
@@ -2288,8 +2288,8 @@ MonoBehaviour:
   cannonballPrefab: {fileID: 6539168055054340386, guid: 5f89c4ffd74824746b497ebabb2f8889, type: 3}
   cannonballParent: {fileID: 1018469028}
   cannonTransform: {fileID: 1134279339}
-  cannonRotationSpeed: 60
-  projectileSpeed: 600
+  cannonRotationSpeed: 2
+  projectileSpeed: 10
   fireSound: {fileID: 0}
   turnManager: {fileID: 2115035723}
   shipSpawner: {fileID: 0}
@@ -2484,8 +2484,8 @@ Canvas:
   m_GameObject: {fileID: 1851968465}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 1
+  m_Camera: {fileID: 519420031}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -2772,6 +2772,7 @@ MonoBehaviour:
   player2GridCanvasGroup: {fileID: 804422655}
   player2Cannon: {fileID: 1689109028}
   scoreText: {fileID: 25059291}
+  gameOverText: {fileID: 0}
   gameOverPanel: {fileID: 0}
   ScoringPanel: {fileID: 1772423491}
   gameMode: 1

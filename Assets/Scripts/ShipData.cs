@@ -7,4 +7,6 @@ public class ShipData : ScriptableObject
  public int length = 3;
     public Sprite shipSprite;
 
+    public Sprite SunkShipSprite;
+
 }

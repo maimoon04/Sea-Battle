@@ -114,6 +114,17 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
             c.SetShip();
     }
 
+    public void OnShipSunk()
+    {
+        image.enabled = true; 
+        image.sprite = shipData.SunkShipSprite;
+        foreach (var c in OccupiedCells)
+            {
+            c.background.enabled = false;
+            c.icon.enabled = false;
+            }
+        // Additional logic when ship is sunk can be added here
+    }
     public void RemoveFromGrid()
     {
         if (OccupiedCells != null)

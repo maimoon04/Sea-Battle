@@ -277,8 +277,8 @@ public class TurnManager : MonoBehaviour
             player1Cannon.shipSpawner = player2Spawner;
             
             // Fire and wait for completion before starting AI turn
-            player1Cannon.FireAtCell(coord, () => {
-                NextBattleTurn();
+            player1Cannon.FireAtCell(coord, (turn) => {
+                NextBattleTurn(turn);
                 // Only start AI turn after player's shot is complete
                 if (gameMode == GameMode.PvAI && !gameOver)
                 {
@@ -333,8 +333,8 @@ public class TurnManager : MonoBehaviour
             player2Cannon.shipSpawner = player1Spawner;
             
             // Fire and handle turn completion
-            player2Cannon.FireAtCell(target, () => {
-                NextBattleTurn();
+            player2Cannon.FireAtCell(target, (turn) => {
+                NextBattleTurn(turn);
             });
         }
     }
@@ -348,7 +348,7 @@ public class TurnManager : MonoBehaviour
         // Make the sunk ship visible
         if (sunkShip != null && sunkShip.image != null)
         {
-            sunkShip.image.enabled = true; // Always show sunk ships
+            sunkShip.OnShipSunk(); // Always show sunk ships
         }
         
         if (!defenderIsPlayer1)
@@ -403,8 +403,15 @@ public class TurnManager : MonoBehaviour
         Debug.Log($"Game Over! Player {winner} wins.");
     }
 
-    void NextBattleTurn()
+    void NextBattleTurn(bool isSamePlayerTurn)
     {
+        Debug.Log("NextBattleTurn called. isSamePlayerTurn: " + isSamePlayerTurn);
+        if(isSamePlayerTurn)
+        {
+            UpdateBattleUI();
+            return;
+        }
+            
         // Alternate turn
         currentBattlePlayer = (currentBattlePlayer == 1) ? 2 : 1;
         UpdateBattleUI();
@@ -428,7 +435,7 @@ public class TurnManager : MonoBehaviour
 
         // Update ship visibility based on current turn
         ShipVisibilityManager.UpdateShipVisibility(player1Spawner, currentBattlePlayer == 1);
-        ShipVisibilityManager.UpdateShipVisibility(player2Spawner, currentBattlePlayer == 2 );
+        ShipVisibilityManager.UpdateShipVisibility(player2Spawner, currentBattlePlayer == 2 && gameMode != GameMode.PvAI);
     }
 
 

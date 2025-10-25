@@ -19,6 +19,7 @@ public class CannonController : MonoBehaviour
     public TurnManager turnManager;
     public ShipSpawner shipSpawner;
     
+    private bool shipSunk =false;
     private bool isActive = false; // Whether this cannon is currently active
     private void Update()
     {
@@ -28,7 +29,7 @@ public class CannonController : MonoBehaviour
 
    
 
-    public void FireAtCell(Vector2Int coordinate,Action onFireComplete)
+    public void FireAtCell(Vector2Int coordinate,Action<bool> onFireComplete)
     {
 
 
@@ -63,7 +64,7 @@ public class CannonController : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveCannonball(GameObject cannonball, Vector3 targetPosition, Cell targetCell, Action onFireComplete)
+    private IEnumerator MoveCannonball(GameObject cannonball, Vector3 targetPosition, Cell targetCell, Action<bool> onFireComplete)
     {
         Transform cannonballTransform = cannonball.transform;
         Vector3 startPos = cannonballTransform.position;
@@ -155,6 +156,7 @@ public class CannonController : MonoBehaviour
                             // This ship was hit
                             if (ship.IsSunk() && turnManager != null)
                             {
+                                shipSunk = true;
                                 turnManager.OnShipSunk(targetGrid, ship);
                             }
                             break;
@@ -167,6 +169,7 @@ public class CannonController : MonoBehaviour
         {
             targetCell.MarkMiss();
         }
-        onFireComplete?.Invoke();
+        onFireComplete?.Invoke(targetCell.State == CellState.Hit && !shipSunk);
+        shipSunk = false;
     }
 }

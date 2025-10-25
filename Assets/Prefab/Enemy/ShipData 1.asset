@@ -15,3 +15,4 @@ MonoBehaviour:
   shipName: boat
   length: 3
   shipSprite: {fileID: -3264246072216595527, guid: 7c519af66e2cdb645ace781976e69730, type: 3}
+  SunkShipSprite: {fileID: 8457254402200410332, guid: cbea8699ef8456741b8f30fddcf1ca5e, type: 3}
