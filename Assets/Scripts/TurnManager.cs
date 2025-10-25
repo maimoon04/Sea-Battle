@@ -27,6 +27,11 @@ public class TurnManager : MonoBehaviour
     public Button player2RandomPlaceButton; // New button for random placement
     public CanvasGroup player2GridCanvasGroup; // For fading
     public CannonController player2Cannon;
+    [Header("Ship Status UI")]
+    // Single container that will hold two rows: Row1 (player1) and Row2 (player2)
+    public RectTransform row1;
+    public RectTransform row2;
+    public GameObject shipIconPrefab; // prefab containing an Image component used as an icon
     public TextMeshProUGUI scoreText;
      public TextMeshProUGUI gameOverText;
     public GameObject gameOverPanel;
@@ -37,6 +42,8 @@ public class TurnManager : MonoBehaviour
    public bool isFiringTurn = false;
     // 1 = player1's turn, 2 = player2's turn
     public int currentBattlePlayer = 1;
+    // map runtime Ship -> UI Image icon for status display
+    private Dictionary<Ship, Image> shipIconMap = new Dictionary<Ship, Image>();
 
     void Update()
     {
@@ -222,8 +229,9 @@ public class TurnManager : MonoBehaviour
     void EnterBattle()
     {
         State = TurnState.Battle;
-        
-        // both grids active for firing turns; spawners disabled
+        player1Spawner.container.gameObject.SetActive(false);
+        row1.parent.gameObject.SetActive(true);
+    // both grids active for firing turns; spawners disabled
         SetPlacementEnabled(player1Grid, player1Spawner, false);
         SetPlacementEnabled(player2Grid, player2Spawner, false);
 
@@ -242,6 +250,8 @@ public class TurnManager : MonoBehaviour
         if (player2GridCanvasGroup != null)
             player2GridCanvasGroup.alpha = 1f;
         ScoringPanel.SetActive(true);
+    // Populate ship status UI (one row per player)
+    PopulateShipStatusUI();
        
         // Set up initial ship visibility
         ShipVisibilityManager.UpdateShipVisibility(player1Spawner, true); // Player 1 starts
@@ -349,6 +359,8 @@ public class TurnManager : MonoBehaviour
         if (sunkShip != null && sunkShip.image != null)
         {
             sunkShip.OnShipSunk(); // Always show sunk ships
+            // Update the corresponding UI icon to sunk sprite
+            UpdateShipIcon(sunkShip);
         }
         
         if (!defenderIsPlayer1)
@@ -452,6 +464,102 @@ public class TurnManager : MonoBehaviour
         // Update ship visibility based on current turn
         ShipVisibilityManager.UpdateShipVisibility(player1Spawner, currentBattlePlayer == 1);
         ShipVisibilityManager.UpdateShipVisibility(player2Spawner, currentBattlePlayer == 2 && gameMode != GameMode.PvAI);
+    }
+
+    // Clear any existing ship status UI icons and mapping
+    void ClearShipStatusUI()
+    {
+        shipIconMap.Clear();
+
+        ClearChildren(row1);
+        ClearChildren(row2);
+    }
+    void ClearChildren(RectTransform parent)
+        {
+            if (parent == null) return;
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                var child = parent.GetChild(i);
+                if (Application.isPlaying)
+                    Destroy(child.gameObject);
+                else
+                    DestroyImmediate(child.gameObject);
+            }
+        }
+    // Instantiate icons for each player's spawned ships and cache mapping
+    void PopulateShipStatusUI()
+    {
+        // Clear existing first
+        ClearShipStatusUI();
+
+        // Helper to create icons for a spawner in a container
+        void CreateIconsFor(ShipSpawner spawner, RectTransform container)
+        {
+            if (spawner == null || container == null || shipIconPrefab == null) return;
+            foreach (var ship in spawner.spawnedShips)
+            {
+                if (ship == null) continue;
+                GameObject go = Instantiate(shipIconPrefab, container);
+                go.transform.localScale = Vector3.one;
+                Image img = go.GetComponent<Image>();
+                if (img == null)
+                    img = go.GetComponentInChildren<Image>();
+                if (img != null)
+                {
+                    Sprite s = (ship.shipData != null && ship.shipData.shipSprite != null) ? ship.shipData.shipSprite : null;
+                    img.sprite = s;
+                    img.preserveAspect = true;
+                }
+                // store mapping for runtime updates
+                if (!shipIconMap.ContainsKey(ship) && img != null)
+                    shipIconMap[ship] = img;
+            }
+        }
+
+        // Ensure parent has a vertical layout so rows stack; add if missing
+        
+            var v = row1.parent.GetComponent<VerticalLayoutGroup>();
+            v.childControlHeight = false;
+            v.childControlWidth = true;
+            v.childForceExpandHeight = false;
+            v.childForceExpandWidth = true;
+            v.spacing = 4f;
+        
+
+        // Use two rows under the single container: Row1 = player1, Row2 = player2
+        RectTransform rowA = GetOrCreateRow(row1);
+        RectTransform rowB = GetOrCreateRow(row2);
+        CreateIconsFor(player1Spawner, rowA);
+        CreateIconsFor(player2Spawner, rowB);
+    }
+
+    // Update the UI icon for a specific ship (e.g., when it is sunk)
+    void UpdateShipIcon(Ship ship)
+    {
+        if (ship == null) return;
+        if (shipIconMap.TryGetValue(ship, out Image img))
+        {
+            Sprite sunkSprite = (ship.shipData != null && ship.shipData.SunkShipSprite != null) ? ship.shipData.SunkShipSprite : null;
+            if (sunkSprite != null)
+                img.sprite = sunkSprite;
+            // visually indicate sunk (dim or tint)
+            img.color = Color.gray;
+        }
+    }
+
+    // Ensure the parent has two row children. Creates a child GameObject with HorizontalLayoutGroup if missing.
+    RectTransform GetOrCreateRow(RectTransform parent)
+    {
+  
+      
+        parent.localScale = Vector3.one;
+        // stretch horizontally
+        parent.anchorMin = new Vector2(0, 0.5f);
+        parent.anchorMax = new Vector2(1, 0.5f);
+        parent.pivot = new Vector2(0.5f, 0.5f);
+        parent.sizeDelta = new Vector2(0, 0);
+
+        return parent;
     }
 
 
