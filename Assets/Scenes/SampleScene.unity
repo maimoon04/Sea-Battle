@@ -499,8 +499,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 50, y: -69.5335}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 538.8, y: -102.0785}
+  m_SizeDelta: {x: 1082.4, y: 65}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &306217676
 MonoBehaviour:
@@ -519,8 +519,8 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 1
-  m_Spacing: 0
+  m_ChildAlignment: 4
+  m_Spacing: 15
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -1181,8 +1181,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 540, y: -1148.6005}
-  m_SizeDelta: {x: 1151.056, y: 139.067}
+  m_AnchoredPosition: {x: 539.99, y: -959.5335}
+  m_SizeDelta: {x: 1080, y: 139.07}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &790475539
 MonoBehaviour:
@@ -1201,10 +1201,10 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
+  m_ChildAlignment: 1
   m_Spacing: 0
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
@@ -2534,7 +2534,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1784555806}
   - component: {fileID: 1784555808}
-  - component: {fileID: 1784555807}
   m_Layer: 5
   m_Name: Row1
   m_TagString: Untagged
@@ -2558,23 +2557,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 538.8, y: -32.545}
+  m_SizeDelta: {x: 1082.4, y: 65.09}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1784555807
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1784555805}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 2
-  m_VerticalFit: 2
 --- !u!114 &1784555808
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2592,8 +2577,8 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 1
-  m_Spacing: 0
+  m_ChildAlignment: 4
+  m_Spacing: 15
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
