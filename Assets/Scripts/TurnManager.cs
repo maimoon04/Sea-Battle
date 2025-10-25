@@ -487,20 +487,85 @@ public class TurnManager : MonoBehaviour
             }
         }
     // Instantiate icons for each player's spawned ships and cache mapping
-    void PopulateShipStatusUI()
-    {
-        // Clear existing first
-        ClearShipStatusUI();
+    void PopulateShipStatusUI(){
 
-        // Helper to create icons for a spawner in a container
-        void CreateIconsFor(ShipSpawner spawner, RectTransform container)
+        // Ensure parent has a vertical layout so rows stack; add if missing
+        
+            
+
+        // Use two rows under the single container: Row1 = player1, Row2 = player2
+      //  RectTransform rowA = GetOrCreateRow(row1);
+      //  RectTransform rowB = GetOrCreateRow(row2);
+        CreateIconsFor(player1Spawner, row1);
+        CreateIconsFor(player2Spawner, row2);
+    }
+
+   void CreateIconsFor(ShipSpawner spawner, RectTransform container)
         {
             if (spawner == null || container == null || shipIconPrefab == null) return;
+            // Count valid ships to spawn icons for
+            int count = 0;
+            foreach (var s in spawner.spawnedShips) if (s != null) count++;
+
+            // Determine layout group spacing/padding if present
+            float spacing = 0f;
+            int padLeft = 0, padRight = 0, padTop = 0, padBottom = 0;
+            var hLayout = container.GetComponent<HorizontalLayoutGroup>();
+            var vLayout = container.GetComponent<VerticalLayoutGroup>();
+            if (hLayout != null)
+            {
+                spacing = hLayout.spacing;
+                padLeft = hLayout.padding.left;
+                padRight = hLayout.padding.right;
+                padTop = hLayout.padding.top;
+                padBottom = hLayout.padding.bottom;
+            }
+            else if (vLayout != null)
+            {
+                spacing = vLayout.spacing;
+                padLeft = vLayout.padding.left;
+                padRight = vLayout.padding.right;
+                padTop = vLayout.padding.top;
+                padBottom = vLayout.padding.bottom;
+            }
+
+            // Compute available width/height for icons
+            float parentWidth = Mathf.Abs(container.rect.width);
+            float parentHeight = Mathf.Abs(container.rect.height);
+            float totalSpacing = Mathf.Max(0, count - 1) * spacing;
+            float totalPaddingH = padLeft + padRight;
+            float totalPaddingV = padTop + padBottom;
+
+            float availableWidth = parentWidth - totalSpacing - totalPaddingH;
+            float availableHeight = parentHeight - totalPaddingV;
+
+            // Fallback if sizes are not yet calculated at edit-time or zero
+            if (availableWidth <= 0) availableWidth = parentWidth > 0 ? parentWidth : 256f;
+            if (availableHeight <= 0) availableHeight = parentHeight > 0 ? parentHeight : 64f;
+
+            // Target a square icon that fits both width-per-item and row height
+            float targetWidthPerItem = count > 0 ? (availableWidth / count) : availableWidth;
+            float iconSize = Mathf.Clamp(Mathf.Min(targetWidthPerItem, availableHeight), 16f, Mathf.Max(availableHeight, targetWidthPerItem));
+
             foreach (var ship in spawner.spawnedShips)
             {
                 if (ship == null) continue;
                 GameObject go = Instantiate(shipIconPrefab, container);
                 go.transform.localScale = Vector3.one;
+
+                // Ensure the rect / layout element sizes the icon appropriately
+                RectTransform rt = go.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    // Let layout group control positioning; set preferred size via LayoutElement
+                    var le = go.GetComponent<LayoutElement>();
+                    if (le == null) le = go.AddComponent<LayoutElement>();
+                    le.preferredWidth = 136.59f;
+                    le.preferredHeight = iconSize;
+                    // Also set rect sizeDelta as a fallback for non-layout setups
+                    rt.sizeDelta = new Vector2(136.59f, iconSize);
+                }
+
                 Image img = go.GetComponent<Image>();
                 if (img == null)
                     img = go.GetComponentInChildren<Image>();
@@ -509,30 +574,14 @@ public class TurnManager : MonoBehaviour
                     Sprite s = (ship.shipData != null && ship.shipData.shipSprite != null) ? ship.shipData.shipSprite : null;
                     img.sprite = s;
                     img.preserveAspect = true;
+                   
                 }
+
                 // store mapping for runtime updates
                 if (!shipIconMap.ContainsKey(ship) && img != null)
                     shipIconMap[ship] = img;
             }
         }
-
-        // Ensure parent has a vertical layout so rows stack; add if missing
-        
-            var v = row1.parent.GetComponent<VerticalLayoutGroup>();
-            v.childControlHeight = false;
-            v.childControlWidth = true;
-            v.childForceExpandHeight = false;
-            v.childForceExpandWidth = true;
-            v.spacing = 4f;
-        
-
-        // Use two rows under the single container: Row1 = player1, Row2 = player2
-        RectTransform rowA = GetOrCreateRow(row1);
-        RectTransform rowB = GetOrCreateRow(row2);
-        CreateIconsFor(player1Spawner, rowA);
-        CreateIconsFor(player2Spawner, rowB);
-    }
-
     // Update the UI icon for a specific ship (e.g., when it is sunk)
     void UpdateShipIcon(Ship ship)
     {
