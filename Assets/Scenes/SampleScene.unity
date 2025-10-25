@@ -2266,7 +2266,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shipPrefab: {fileID: 8964483631468916274, guid: 9794a973650264c42b348a9e5a867f0a, type: 3}
-  container: {fileID: 1851968469}
+  container: {fileID: 863691934}
   shipsToSpawn:
   - {fileID: 11400000, guid: 73e28ff092e0393449571d840a550276, type: 2}
   - {fileID: 11400000, guid: 2f3800c24cb121f40badbad01452c47f, type: 2}
