@@ -34,6 +34,7 @@ public class TurnManager : MonoBehaviour
     public TurnState State { get; private set; } = TurnState.Player1Placement;
     public GameMode gameMode = GameMode.PvP;
 
+   public bool isFiringTurn = false;
     // 1 = player1's turn, 2 = player2's turn
     public int currentBattlePlayer = 1;
 
@@ -271,19 +272,16 @@ public class TurnManager : MonoBehaviour
     {
         if (State == TurnState.Battle && currentBattlePlayer == 2) return;
         if (gameOver) return;
+        if(isFiringTurn) return;
         if (player1Cannon != null && player2Grid != null)
         {
             player1Cannon.targetGrid = player2Grid;
             player1Cannon.shipSpawner = player2Spawner;
-            
+            isFiringTurn = true;
             // Fire and wait for completion before starting AI turn
             player1Cannon.FireAtCell(coord, (turn) => {
                 NextBattleTurn(turn);
                 // Only start AI turn after player's shot is complete
-                if (gameMode == GameMode.PvAI && !gameOver)
-                {
-                    StartCoroutine(AIFireCoroutine());
-                }
             });
         }
     }
@@ -295,10 +293,12 @@ public class TurnManager : MonoBehaviour
         if (gameMode == GameMode.PvAI) return; // AI never clicks
         if (State == TurnState.Battle && currentBattlePlayer == 1) return;
         if (gameOver) return;
+        if(isFiringTurn) return;
         if (player2Cannon != null && player1Grid != null)
         {
             player2Cannon.targetGrid = player1Grid;
             player2Cannon.shipSpawner = player1Spawner;
+            isFiringTurn = true;
             player2Cannon.FireAtCell(coord,  NextBattleTurn);
         }
     }
@@ -405,15 +405,31 @@ public class TurnManager : MonoBehaviour
 
     void NextBattleTurn(bool isSamePlayerTurn)
     {
+        isFiringTurn = false;
         Debug.Log("NextBattleTurn called. isSamePlayerTurn: " + isSamePlayerTurn);
         if(isSamePlayerTurn)
         {
             UpdateBattleUI();
+            if (currentBattlePlayer == 1)
+            {
+                 currentBattlePlayer = 1; 
+            }   
+            else
+            {
+            if (gameMode == GameMode.PvAI && !gameOver)
+                {
+                    StartCoroutine(AIFireCoroutine());
+                }
+            }
             return;
         }
-            
+
         // Alternate turn
         currentBattlePlayer = (currentBattlePlayer == 1) ? 2 : 1;
+        if (currentBattlePlayer == 2 && gameMode == GameMode.PvAI && !gameOver)
+            {
+               StartCoroutine(AIFireCoroutine());
+            }
         UpdateBattleUI();
     }
 
