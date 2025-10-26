@@ -264,15 +264,30 @@ public class TurnManager : MonoBehaviour
             }
             while (!placed && attempts < 200)
             {
+                bool isHorizontal = rand.Next(0, 2) == 0;
+                ship.isVertical = !isHorizontal;
+                
                 // Compute valid random start based on orientation
                 int x, y;
                
+                   if (isHorizontal)
+                {
+                    // Placing HORIZONTALLY (along X-axis)
+                    // We must limit the X range
                     x = rand.Next(0, Mathf.Max(1, grid.columns - ship.shipData.length + 1));
                     y = rand.Next(0, grid.rows);
+                }
+                else
+                {
+                    // Placing VERTICALLY (along Y-axis)
+                    // We must limit the Y range
+                    x = rand.Next(0, grid.columns);
+                    y = rand.Next(0, Mathf.Max(1, grid.rows - ship.shipData.length + 1));
+                }
               
 
                 Vector2Int start = new Vector2Int(x, y);
-                placed = grid.TryPlaceShip(ship, start, false);
+                placed = grid.TryPlaceShip(ship, start, !isHorizontal);
 
                 if (!placed)
                 {
