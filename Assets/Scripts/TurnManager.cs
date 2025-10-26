@@ -148,13 +148,12 @@ public class TurnManager : MonoBehaviour
 
         if (gameMode == GameMode.PvAI)
         {
-            // AI: place ships randomly
+            // AI: place ships randomly (run coroutine so we can animate placements)
             if (player2Spawner != null && player2Grid != null)
             {
-                PlaceShipsRandomly(player2Spawner, player2Grid);
+                StartCoroutine(PlaceShipsRandomly(player2Spawner, player2Grid));
             }
-            // Skip ready button, go straight to battle
-            EnterBattle();
+            // EnterBattle will be invoked from the coroutine when AI placement completes
         }
         else
         {
@@ -178,9 +177,9 @@ public class TurnManager : MonoBehaviour
                     if (ship.isPlaced)
                         ship.RemoveFromGrid();
                 }
-                PlaceShipsRandomly(player1Spawner, player1Grid);
-                
-                // Show ready button since all ships are now placed
+                StartCoroutine(PlaceShipsRandomly(player1Spawner, player1Grid));
+
+                // Show ready button since all ships are now considered placed
                 if (player1ReadyButton != null)
                     player1ReadyButton.gameObject.SetActive(true);
             }
@@ -194,36 +193,97 @@ public class TurnManager : MonoBehaviour
                     if (ship.isPlaced)
                         ship.RemoveFromGrid();
                 }
-                PlaceShipsRandomly(player2Spawner, player2Grid);
-                // Show ready button since all ships are now placed
+                StartCoroutine(PlaceShipsRandomly(player2Spawner, player2Grid));
+                // Show ready button since all ships are now considered placed
                 if (player2ReadyButton != null)
                     player2ReadyButton.gameObject.SetActive(true);
             }
         }
     }
-    // Randomly place all ships for the AI
-    void PlaceShipsRandomly(ShipSpawner spawner, GridController grid)
+    // Randomly place ships with a small visual pulse per-ship. Runs as a coroutine so AI placement can be animated.
+    IEnumerator PlaceShipsRandomly(ShipSpawner spawner, GridController grid)
     {
+        if (spawner == null || grid == null) yield break;
+
+        // Ensure ships are spawned in the spawner (so the visual matches player spawner)
+        if (spawner.spawnedShips == null || spawner.spawnedShips.Count == 0)
+            spawner.SpawnAll();
+
         System.Random rand = new System.Random();
+
         foreach (var ship in spawner.spawnedShips)
         {
+            if (ship == null) continue;
+
+            // Make sure the ship is visible in the spawner briefly and pulse it to indicate placement
+            RectTransform rt = ship.GetComponent<RectTransform>();
+            if (ship.image != null)
+            {
+                ship.image.enabled = true;
+                ship.image.canvasRenderer.SetAlpha(1f);
+            }
+
+            if (rt != null)
+            {
+                Vector3 orig = rt.localScale;
+                float dur = 0.12f;
+                float t = 0f;
+                while (t < dur)
+                {
+                    t += Time.deltaTime;
+                    float f = Mathf.Sin((t / dur) * Mathf.PI);
+                    rt.localScale = Vector3.Lerp(orig, orig * 1.12f, f);
+                    yield return null;
+                }
+                rt.localScale = orig;
+            }
+
+            // Choose random orientation and attempt to place the ship. Keep the ship image disabled while moving so the placement isn't revealed.
             bool placed = false;
             int attempts = 0;
-            while (!placed && attempts < 50)
+
+
+            if (gameMode == GameMode.PvAI && spawner == player2Spawner)
             {
-                Debug.Log($"Placing ship {ship.shipData.shipName}, attempt {attempts + 1}");
-                
-                int maxX =  grid.columns - 1;
-                int maxY =  grid.rows - ship.shipData.length;
-                int x = rand.Next(0, maxX + 1);
-                int y = rand.Next(0, maxY + 1);
-                Vector2Int start = new Vector2Int(x, y);
-               
-                placed = grid.TryPlaceShip(ship, start, false);
-                attempts++;
+                ship.image.enabled = false; // hide while placing to avoid revealing AI positions
             }
+            while (!placed && attempts < 200)
+            {
+                // Compute valid random start based on orientation
+                int x, y;
+               
+                    x = rand.Next(0, Mathf.Max(1, grid.columns - ship.shipData.length + 1));
+                    y = rand.Next(0, grid.rows);
+              
+
+                Vector2Int start = new Vector2Int(x, y);
+                placed = grid.TryPlaceShip(ship, start, false);
+
+                if (!placed)
+                {
+                  
+                }
+
+                attempts++;
+                // avoid blocking too long in a single frame
+                if (attempts % 10 == 0) yield return null;
+            }
+
+            // brief pause between each ship placement for pacing
+            yield return new WaitForSeconds(0.15f);
         }
-        spawner.TurnOffAllShips();
+
+        // Ensure ships become non-interactive in their spawner representation
+        
+
+        // If this was the AI (player 2) and we're in PvAI, go to battle once placement finishes
+        if (gameMode == GameMode.PvAI && spawner == player2Spawner)
+        {
+            spawner.TurnOffAllShips();
+            // Keep AI ships hidden until they're revealed by hits/sunk
+            ShipVisibilityManager.UpdateShipVisibility(player2Spawner, false);
+            EnterBattle();
+        }
     }
 
     void EnterBattle()
@@ -487,15 +547,9 @@ public class TurnManager : MonoBehaviour
             }
         }
     // Instantiate icons for each player's spawned ships and cache mapping
-    void PopulateShipStatusUI(){
+    void PopulateShipStatusUI()
+    {
 
-        // Ensure parent has a vertical layout so rows stack; add if missing
-        
-            
-
-        // Use two rows under the single container: Row1 = player1, Row2 = player2
-      //  RectTransform rowA = GetOrCreateRow(row1);
-      //  RectTransform rowB = GetOrCreateRow(row2);
         CreateIconsFor(player1Spawner, row1);
         CreateIconsFor(player2Spawner, row2);
     }
@@ -597,20 +651,6 @@ public class TurnManager : MonoBehaviour
     }
 
     // Ensure the parent has two row children. Creates a child GameObject with HorizontalLayoutGroup if missing.
-    RectTransform GetOrCreateRow(RectTransform parent)
-    {
-  
-      
-        parent.localScale = Vector3.one;
-        // stretch horizontally
-        parent.anchorMin = new Vector2(0, 0.5f);
-        parent.anchorMax = new Vector2(1, 0.5f);
-        parent.pivot = new Vector2(0.5f, 0.5f);
-        parent.sizeDelta = new Vector2(0, 0);
-
-        return parent;
-    }
-
 
     void UpdateReadyButtons()
     {
@@ -621,17 +661,13 @@ public class TurnManager : MonoBehaviour
             if (player1ReadyButton != null)
                 player1ReadyButton.gameObject.SetActive(allShipsPlaced);
                 
-            if(allShipsPlaced)
-                player1Spawner.TurnOffAllShips();
+           
         }
         else if (!player2Ready &&  gameMode != GameMode.PvAI)
         {
             bool allShipsPlaced = (player2Spawner != null && player2Spawner.AllShipsPlaced());
             if (player2ReadyButton != null)
                 player2ReadyButton.gameObject.SetActive(allShipsPlaced);
-
-            if(allShipsPlaced)
-                player2Spawner.TurnOffAllShips();
         }
     }
 
@@ -639,6 +675,7 @@ public class TurnManager : MonoBehaviour
     {
         if (playerIndex == 1 && State == TurnState.Player1Placement)
         {
+            player1Spawner.TurnOffAllShips();
             player1Ready = true;
             player1ReadyButton.gameObject.SetActive(false);
             ShipVisibilityManager.UpdateShipVisibility(player1Spawner, false);
@@ -651,6 +688,7 @@ public class TurnManager : MonoBehaviour
         }
         else if (playerIndex == 2 && State == TurnState.Player2Placement)
         {
+            player2Spawner.TurnOffAllShips();
             player2Ready = true;
             player2ReadyButton.gameObject.SetActive(false);
             ShipVisibilityManager.UpdateShipVisibility(player2Spawner, false);
