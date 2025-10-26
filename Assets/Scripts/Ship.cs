@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
@@ -146,15 +147,28 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         {
             foreach (var c in OccupiedCells)
             {
-                if (c != null) c.ClearShip();
+                if (c != null)
+                {
+                    c.ClearShip();
+                    c.SetPreview(false); // Clear any preview state
+                }
             }
         }
         OccupiedCells = null;
         isPlaced = false;
+        SetCollisionMode(false); // Reset ship appearance
 
         // Disable rotate button when not on a grid
         if (rotateButton != null)
             rotateButton.interactable = false;
+    }
+
+    public void SetCollisionMode(bool isColliding)
+    {
+        if (image != null)
+        {
+            image.sprite = isColliding ? shipData.SunkShipSprite : shipData.shipSprite;
+        }
     }
 
     public void Rotate()
@@ -174,11 +188,12 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
             return;
         }
 
-        // When placed on a grid, attempt an in-place rotation that updates occupied cells.
+        // When rotating a placed ship, check for collisions but allow visual rotation
         if (OccupiedCells == null || OccupiedCells.Length == 0 || shipData == null)
             return;
 
         var grid = OccupiedCells[0].GetComponentInParent<GridController>();
+
         if (grid == null)
         {
             // fallback to simple rotate if we can't find the grid
@@ -192,38 +207,64 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         bool newIsVertical = !isVertical;
         int len = shipData.length;
         var newCells = new System.Collections.Generic.List<Cell>();
+        bool hasCollision = false;
 
+        // Clear previous cells first
+        foreach (var c in OccupiedCells)
+            if (c != null) c.ClearShip();
+
+        List<Cell> oldCells = new ();
+        // Check new rotation position
         for (int i = 0; i < len; i++)
         {
             Vector2Int coord = !newIsVertical ? new Vector2Int(gridPosition.x, gridPosition.y + i) : new Vector2Int(gridPosition.x + i, gridPosition.y);
             Cell c = grid.GetCell(coord);
+
             if (c == null)
             {
-                Debug.Log("Rotation blocked: out of bounds");
-                return; // can't rotate because it would go out of grid
-            }
+                foreach (var oldCell in oldCells)
+                    if (oldCell != null) oldCell.SetPreview(false, false);
 
-            // Allow occupying current ship's cells (they will be cleared and re-set). But if another ship occupies the cell -> blocked.
+                    oldCells.Clear();  
+                foreach (var oldCell in OccupiedCells)
+                    if (oldCell != null) oldCell.SetShip();
+                return;
+            }
+            else
+            {
+                oldCells.Add(c);
+            }
+            // Check for collisions with other ships
             bool occupiedByThisShip = System.Array.Exists(OccupiedCells, oc => oc == c);
             if (c.State == CellState.Ship && !occupiedByThisShip)
             {
-                Debug.Log("Rotation blocked: collision with another ship");
-                return; // collision
+                hasCollision = true;
             }
 
             newCells.Add(c);
+            // Set preview color based on collision
+            c.SetPreview(true, hasCollision);
         }
+        if(oldCells.Count<len){
+               foreach (var oldCell in oldCells)
+                    if (oldCell != null) oldCell.SetPreview(false, false);
 
-        // Clear previous cells
-        foreach (var c in OccupiedCells)
-            if (c != null) c.ClearShip();
-
-        // Set the new cells as occupied
-        foreach (var c in newCells)
-            c.SetShip();
-
-        OccupiedCells = newCells.ToArray();
+        }
+        
+                oldCells.Clear();
+        // Update ship's visual state
+        SetCollisionMode(hasCollision);
+        
+        // Update orientation and cells
         isVertical = newIsVertical;
+        OccupiedCells = newCells.ToArray();
+
+        // If there's a collision, don't actually occupy the cells
+        if (!hasCollision)
+        {
+            foreach (var c in newCells)
+                c.SetShip();
+        }
 
         // Update stored starting grid position to the new first cell
         gridPosition = OccupiedCells[0].coordinate;
@@ -336,6 +377,9 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
             Vector3 pos = transform.position;
             pos.z = originalPosition.z;
             transform.position = pos;
+
+            // Reset ship appearance
+            SetCollisionMode(false);
         }
 
         canvasGroup.blocksRaycasts = true;

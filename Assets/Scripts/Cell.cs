@@ -14,6 +14,9 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 	public Image icon; 
 	public ParticleSystem hitEffect; // put hit/miss sprite here
 
+    public Color normalColor = Color.white;
+    public Color previewColor = Color.green;
+    public Color collisionColor = Color.red;
     public Sprite crossedSprite;
 	private CellState state = CellState.Empty;
 
@@ -28,9 +31,20 @@ public class Cell : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ID
 	{
 		coordinate = coord;
 		state = CellState.Empty;
+        if (background != null)
+        {
+            background.color = normalColor;
+        }
 		UpdateVisual();
 	}
 
+    public void SetPreview(bool isPreview, bool isCollision = false)
+    {
+        if (background != null)
+        {
+            background.color = isPreview ? (isCollision ? collisionColor : previewColor) : normalColor;
+        }
+    }
 
 	public void SetShip()
 	{

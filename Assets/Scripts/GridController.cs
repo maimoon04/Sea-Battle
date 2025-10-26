@@ -129,21 +129,28 @@ public class GridController : MonoBehaviour
 
 		int len = ship.shipData.length;
 		List<Cell> toPreview = new List<Cell>();
+		bool hasCollision = false;
+
 		for (int i = 0; i < len; i++)
 		{
 			Vector2Int coord = !isVertical ? new Vector2Int(start.x, start.y + i) : new Vector2Int(start.x + i, start.y);
 			Cell c = GetCell(coord);
 			if (c == null) { toPreview = null; break; }
+			if (c.State == CellState.Ship) hasCollision = true;
 			toPreview.Add(c);
 		}
 
 		if (toPreview == null) return;
-		// mark preview visuals
+
+		// mark preview visuals and set collision state
 		foreach (var c in toPreview)
 		{
-			c.SetPreview(true);
+			c.SetPreview(true, hasCollision);
 			previewCells.Add(c);
 		}
+
+		// Update ship appearance based on collision state
+		ship.SetCollisionMode(hasCollision);
 	}
 
 	public void ClearPreview()
