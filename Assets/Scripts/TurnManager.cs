@@ -675,6 +675,7 @@ public class TurnManager : MonoBehaviour
     {
         if (playerIndex == 1 && State == TurnState.Player1Placement)
         {
+            player1Spawner.OnAllShipsPlaced();
             player1Spawner.TurnOffAllShips();
             player1Ready = true;
             player1ReadyButton.gameObject.SetActive(false);
@@ -688,6 +689,7 @@ public class TurnManager : MonoBehaviour
         }
         else if (playerIndex == 2 && State == TurnState.Player2Placement)
         {
+            player2Spawner.OnAllShipsPlaced();
             player2Spawner.TurnOffAllShips();
             player2Ready = true;
             player2ReadyButton.gameObject.SetActive(false);

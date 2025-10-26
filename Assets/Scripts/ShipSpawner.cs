@@ -71,6 +71,17 @@ public class ShipSpawner : MonoBehaviour
             }
         }
     }
+
+    public void OnAllShipsPlaced()
+    {
+        foreach (var ship in spawnedShips)
+        {
+            if (ship != null)
+            {
+                ship.OnPlaced();
+            }
+        }
+    }
     // Returns true when all spawned ships have been placed on the grid
     public bool AllShipsPlaced()
     {

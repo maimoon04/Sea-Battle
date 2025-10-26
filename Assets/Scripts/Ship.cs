@@ -192,8 +192,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         Vector3 pos = transform.position;
         pos.z = 0;
         transform.position = pos;
-
-        canvasGroup.blocksRaycasts = false;
+ canvasGroup.blocksRaycasts = false;
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -214,6 +213,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     {
         if (isPlaced)
         {
+            canvasGroup.blocksRaycasts = true;
             DraggingShip = null;
             return;
         }
@@ -236,13 +236,10 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     }
 
     // Called by GridController when the ship has been successfully placed
-    public void OnPlaced(Transform parent, Vector2 anchoredPosition)
+    public void OnPlaced()
     {
         isPlaced = true;
-        transform.SetParent(parent, false);
-        if (rect != null)
-            rect.anchoredPosition = anchoredPosition;
-        canvasGroup.blocksRaycasts = true;
+        canvasGroup.blocksRaycasts = false;
     }
 
     public void OnPointerClick(PointerEventData eventData)
