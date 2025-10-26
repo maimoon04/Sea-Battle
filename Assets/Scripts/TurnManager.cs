@@ -60,6 +60,21 @@ public class TurnManager : MonoBehaviour
     public bool gameOver = false;
     public bool player1Ready = false;
     public bool player2Ready = false;
+
+    // Call this when a cell is hit (not just when a ship is sunk)
+    public void OnCellHit(int playerIndex)
+    {
+        if (gameOver) return;
+        if (playerIndex == 1)
+        {
+            player1Score++;
+        }
+        else if (playerIndex == 2)
+        {
+            player2Score++;
+        }
+        UpdateBattleUI();
+    }
     public void StartGame(bool isAIMode)
     {
         gameMode = isAIMode ? GameMode.PvAI : GameMode.PvP;
@@ -426,7 +441,7 @@ public class TurnManager : MonoBehaviour
         if (!defenderIsPlayer1)
         {
             // Player 1 sunk a ship
-            player1Score++;
+           
             Debug.Log($"Player 1 sunk a ship! Score: {player1Score}");
             if (AllShipsSunk(player2Spawner))
             {
@@ -441,7 +456,7 @@ public class TurnManager : MonoBehaviour
         else
         {
             // Player 2 sunk a ship
-            player2Score++;
+          
             Debug.Log($"Player 2 sunk a ship! Score: {player2Score}");
             if (AllShipsSunk(player1Spawner))
             {

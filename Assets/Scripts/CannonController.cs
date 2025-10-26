@@ -142,6 +142,16 @@ public class CannonController : MonoBehaviour
         {
             targetCell.MarkHit();
 
+            // Update score for hit
+            if (turnManager != null)
+            {
+                // Determine which player is attacking
+                int attackerIndex = 1;
+                if (targetGrid == turnManager.player1Grid)
+                    attackerIndex = 2;
+                turnManager.OnCellHit(attackerIndex);
+            }
+
             // Check if this cell belongs to a ship and if that ship is sunk
             List<Ship> ships = shipSpawner.spawnedShips;
             foreach (var ship in ships)
