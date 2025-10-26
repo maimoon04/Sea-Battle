@@ -96,14 +96,9 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         if (shipData == null || rect == null) return;
 
         float length = shipData.length * currentCellSize + (shipData.length - 1) * currentSpacing;
-        if (isVertical)
-        {
-            rect.sizeDelta = new Vector2(currentCellSize, length);
-        }
-        else
-        {
+       
             rect.sizeDelta = new Vector2(length, currentCellSize);
-        }
+        
     }
 
     public void PlaceOnGrid(Cell[] cells)

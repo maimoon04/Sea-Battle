@@ -213,7 +213,7 @@ public class GridController : MonoBehaviour
 			}
 			else
 			{
-				shipRect.sizeDelta = new Vector2(cellW, len * cellH);
+				shipRect.sizeDelta = new Vector2(len * cellW, cellH);
 			}
 
 			// center ship between first and last cell
