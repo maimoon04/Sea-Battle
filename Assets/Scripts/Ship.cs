@@ -10,6 +10,9 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     public Vector2Int gridPosition; // starting cell coordinate
     public bool isVertical = false;
 
+    // UI rotate button that rotates the ship when clicked. Enabled only when placed on a grid.
+    public UnityEngine.UI.Button rotateButton;
+
     // allow re-positioning placed ships by dragging
     public bool allowReposition = false;
 
@@ -45,6 +48,13 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+        // Wire up rotate button if present. Start disabled until ship is placed.
+        if (rotateButton != null)
+        {
+            rotateButton.onClick.AddListener(() => Rotate());
+            rotateButton.interactable = false;
+        }
     }
 
     void Update()
@@ -103,10 +113,20 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     public void PlaceOnGrid(Cell[] cells)
     {
+        if (cells == null || cells.Length == 0) return;
+
         OccupiedCells = cells;
         isPlaced = true;
+
+        // Remember starting coordinate as the first occupied cell
+        gridPosition = OccupiedCells[0].coordinate;
+
         foreach (var c in OccupiedCells)
             c.SetShip();
+
+        // Enable rotate button now that the ship is on the grid
+        if (rotateButton != null)
+            rotateButton.interactable = true;
     }
 
     public void OnShipSunk()
@@ -131,13 +151,105 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         }
         OccupiedCells = null;
         isPlaced = false;
+
+        // Disable rotate button when not on a grid
+        if (rotateButton != null)
+            rotateButton.interactable = false;
     }
 
     public void Rotate()
     {
-        isVertical = !isVertical;
-        image.SetNativeSize();
-        UpdateShipSize(); // Update size before rotation
+        // If the ship isn't placed, just toggle orientation visually (editor/spawner behaviour)
+        if (!isPlaced)
+        {
+            isVertical = !isVertical;
+            image.SetNativeSize();
+            UpdateShipSize(); // Update size before rotation
+            ApplyRotation();
+            // refresh preview on the current preview grid if present
+            if (GridController.CurrentPreviewGrid != null)
+            {
+                GridController.CurrentPreviewGrid.UpdatePreviewForCurrentStart(this);
+            }
+            return;
+        }
+
+        // When placed on a grid, attempt an in-place rotation that updates occupied cells.
+        if (OccupiedCells == null || OccupiedCells.Length == 0 || shipData == null)
+            return;
+
+        var grid = OccupiedCells[0].GetComponentInParent<GridController>();
+        if (grid == null)
+        {
+            // fallback to simple rotate if we can't find the grid
+            isVertical = !isVertical;
+            image.SetNativeSize();
+            UpdateShipSize();
+            ApplyRotation();
+            return;
+        }
+
+        bool newIsVertical = !isVertical;
+        int len = shipData.length;
+        var newCells = new System.Collections.Generic.List<Cell>();
+
+        for (int i = 0; i < len; i++)
+        {
+            Vector2Int coord = !newIsVertical ? new Vector2Int(gridPosition.x, gridPosition.y + i) : new Vector2Int(gridPosition.x + i, gridPosition.y);
+            Cell c = grid.GetCell(coord);
+            if (c == null)
+            {
+                Debug.Log("Rotation blocked: out of bounds");
+                return; // can't rotate because it would go out of grid
+            }
+
+            // Allow occupying current ship's cells (they will be cleared and re-set). But if another ship occupies the cell -> blocked.
+            bool occupiedByThisShip = System.Array.Exists(OccupiedCells, oc => oc == c);
+            if (c.State == CellState.Ship && !occupiedByThisShip)
+            {
+                Debug.Log("Rotation blocked: collision with another ship");
+                return; // collision
+            }
+
+            newCells.Add(c);
+        }
+
+        // Clear previous cells
+        foreach (var c in OccupiedCells)
+            if (c != null) c.ClearShip();
+
+        // Set the new cells as occupied
+        foreach (var c in newCells)
+            c.SetShip();
+
+        OccupiedCells = newCells.ToArray();
+        isVertical = newIsVertical;
+
+        // Update stored starting grid position to the new first cell
+        gridPosition = OccupiedCells[0].coordinate;
+
+        // Re-anchor and resize the ship rect to match the new cells (similar to GridController.TryPlaceShip)
+        RectTransform shipRect = GetComponent<RectTransform>();
+        Cell firstCell = OccupiedCells.Length > 0 ? OccupiedCells[0] : null;
+        Cell lastCell = OccupiedCells.Length > 0 ? OccupiedCells[OccupiedCells.Length - 1] : null;
+        if (shipRect != null && firstCell != null && lastCell != null)
+        {
+            RectTransform firstRect = firstCell.GetComponent<RectTransform>();
+            RectTransform lastRect = lastCell.GetComponent<RectTransform>();
+
+           shipRect.SetParent(grid.transform, false);
+
+            float cellW = firstRect.rect.width;
+            float cellH = firstRect.rect.height;
+            shipRect.sizeDelta = new Vector2(len * cellW, cellH);
+
+            Vector2 center = (firstRect.anchoredPosition + lastRect.anchoredPosition) * 0.5f;
+            shipRect.pivot = new Vector2(0.5f, 0.5f);
+            shipRect.anchoredPosition = center;
+
+            transform.rotation = Quaternion.Euler(0, 0, isVertical ? 90f : 0f);
+        }
+
         ApplyRotation();
     }
 
